@@ -1,0 +1,16 @@
+syntax = "proto3";
+package protocol;
+
+message Message {
+    string  avatar          = 1;    // avatar
+    string  fromUsername    = 2;    // username of the user who sent the message
+    string  from            = 3;    // send message user uuid
+    string  to              = 4;    // the uuid sent to the peer user
+    string  content         = 5;    // text message content
+    int32   contentType     = 6;    // message content type: 1. Text 2. Ordinary file 3. Picture 4. Audio 5. Video 6. Voice chat 7. Video chat
+    string  type            = 7;    // if it is a heartbeat message, the content is heartbeat
+    int32   messageType     = 8;    // message type, 1. Single chat 2. Group chat
+    string  url             = 9;    // paths for pictures, videos, voices
+    string  fileSuffix      = 10;   // file suffix, if the file suffix cannot be parsed through the binary header, use this suffix
+    bytes   file            = 11;   // in the case of binary images, files, videos, etc.
+}
