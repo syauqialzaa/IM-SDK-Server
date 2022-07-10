@@ -2,31 +2,34 @@ package service
 
 import (
 	"gin-chat-svc/app/model"
-	"gin-chat-svc/pkg/common/request"
-	"gin-chat-svc/pkg/common/response"
+	"gin-chat-svc/pkg/common/constant"
 	"gin-chat-svc/pkg/logger"
 	"gin-chat-svc/pkg/misprint"
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
-
-type UserService struct {}
-
-var NewUserService = new(UserService)
 
 func (u *UserService) Register(user *model.User) error {
 	// db := db.GetDB()
 	var userCount int64
 
-	Db.Model(user).Where("username", user.Username).Count(&userCount)
+	Db.First(&user, "username = ?", user.Username).Count(&userCount)
 	if userCount > 0 {
 		return misprint.New("user already exist")
 	}
 
-	user.Uuid = uuid.New().String()
-	user.CreateAt = time.Now()
-	user.DeleteAt = 0
+	// Db.Model(user).Where("username", user.Username).Count(&userCount)
+	// if userCount > 0 {
+	// 	return misprint.New("user already exist")
+	// }
+
+	// create unique user UUID
+	user.Uuid = (constant.USER_TAG_UUID + uuid.New().String())
+	// =====================================================================
+	// user.CreatedAt = time.Now().Local()
+	// user.DeletedAt = timeZero
 
 	Db.Create(&user)
 
@@ -34,9 +37,6 @@ func (u *UserService) Register(user *model.User) error {
 }
 
 func (u *UserService) Login(user *model.User) bool {
-	// db.GetDB().AutoMigrate(&user)
-	// db := db.GetDB()
-
 	var queryUser *model.User
 	logger.Logger.Debug("service", logger.Any("user in service", user))
 
@@ -49,54 +49,95 @@ func (u *UserService) Login(user *model.User) bool {
 	return compare
 }
 
-func (u *UserService) ModifyUserInfo(user *model.User) error {
-	// db := db.GetDB()
+func (u *UserService) DeleteUser(userUuid string) model.User {
 	var queryUser *model.User
 
-	Db.First(&queryUser, "username = ?", user.Username) // user.Username
-	logger.Logger.Debug("service", logger.Any("queryUser", queryUser))
-
-	var ID_NIL int32 = 0
-	if ID_NIL == queryUser.ID {
-		return misprint.New("user doesn't exist")
+	Db.First(&queryUser, "uuid = ?", userUuid)
+	if queryUser.ID == constant.NULL_ID {
+		return *queryUser
 	}
 
-	queryUser.Nickname	= user.Nickname
-	queryUser.Email		= user.Email
-	queryUser.Password	= user.Password
+	Db.Delete(&queryUser)
+	return *queryUser
+}
 
-	Db.Save(queryUser)
+// func (u *UserService) ModifyUserInfo(user *model.User) error {
+// 	// db := db.GetDB()
+// 	var queryUser *model.User
 
+// 	Db.First(&queryUser, "username = ?", user.Username) // user.Username
+// 	logger.Logger.Debug("service", logger.Any("queryUser", queryUser))
+
+// 	var ID_NIL int32 = 0
+// 	if ID_NIL == queryUser.ID {
+// 		return misprint.New("user doesn't exist")
+// 	}
+
+// 	queryUser.Nickname	= user.Nickname
+// 	queryUser.Email		= user.Email
+// 	queryUser.Password	= user.Password
+
+// 	Db.Save(&queryUser)
+
+// 	return nil
+// }
+
+func (u *UserService) ModifyUser(db *gorm.DB, user *model.User) error {
+	// var user model.User
+	if err := db.Model(&user).Updates(map[string]interface{} {
+		"username":		user.Username,
+		"password":		user.Password,
+		"nickname":		user.Nickname,
+		"email":		user.Email,
+	}).Error; err != nil {
+		return misprint.New("failed to update.")
+	}
+
+	db.Model(&user).Update("updated_at", time.Now().Local())
+	// db.Save(user)
 	return nil
+}
+
+// update user start online in db
+func (u *UserService) StartOnline(userUuid string) (time.Time, error) {
+	var queryUser *model.User
+	var timestamp time.Time
+
+	Db.First(&queryUser, "uuid = ?", userUuid)
+	if queryUser.ID == constant.NULL_ID {
+		return timestamp, misprint.New("user doesn't exist.")
+	}
+
+	Db.Model(&queryUser).Update("start_online", time.Now().Local())
+	// return time.Time in model to NULL
+	Db.Raw(`UPDATE users SET last_online = NULL WHERE uuid = ?`, queryUser.Uuid).Scan(&queryUser)
+
+	return timestamp, nil
+}
+
+// update user last online in db
+func (u *UserService) LastOnline(userUuid string) (time.Time, error) {
+	var queryUser *model.User
+	var timestamp time.Time
+
+	Db.First(&queryUser, "uuid = ?", userUuid)
+	if queryUser.ID == constant.NULL_ID {
+		return timestamp, misprint.New("user doesn't exist.")
+	}
+
+	Db.Model(&queryUser).Update("last_online", time.Now().Local())
+
+	return timestamp, nil
 }
 
 func (u *UserService) GetUserDetails(uuid string) model.User {
 	// db := db.GetDB()
 	var queryUser *model.User
 
-	Db.Select("uuid", "username", "nickname", "avatar").
+	Db.Select("uuid", "username", "nickname", "avatar", "email").
 		First(&queryUser, "uuid = ?", uuid)
 
 	return *queryUser
-}
-
-// find groups or users by name
-func (u *UserService) GetUserOrGroupByName(name string) response.SearchResponse {
-	// db := db.GetDB()
-	var queryUser *model.User
-
-	Db.Select("uuid", "username", "nickname", "avatar").
-		First(&queryUser, "username = ?", name)
-
-	var queryGroup *model.Group
-	Db.Select("uuid", "name").First(&queryGroup, "name = ?", name)
-
-	search := response.SearchResponse {
-		User: 	*queryUser,
-		Group: 	*queryGroup,
-	}
-
-	return search
 }
 
 func (u *UserService) GetUserList(uuid string) []model.User {
@@ -104,70 +145,19 @@ func (u *UserService) GetUserList(uuid string) []model.User {
 	var queryUser *model.User
 
 	Db.First(&queryUser, "uuid = ?", uuid)
-
-	var ID_NIL int32 = 0
-	if ID_NIL == queryUser.ID {
+	if queryUser.ID == constant.NULL_ID {
 		return nil
 	}
 
 	var queryUsers []model.User
+
 	Db.Raw(`
 		SELECT u.username, u.uuid, u.avatar 
-		FROM user_friends AS uf JOIN users AS u ON uf.friend_id = u.id 
-		WHERE uf.user_id = ?
+		FROM user_interacts AS ui JOIN users AS u ON ui.interact_with_id = u.id 
+		WHERE ui.deleted_at IS NULL AND ui.user_id = ?
 	`, queryUser.ID).Scan(&queryUsers)
 
 	return queryUsers
-}
-
-func (u *UserService) AddFriend(userFriendRequest *request.FriendRequest) error {
-	// db := db.GetDB()
-	var queryUser *model.User
-
-	Db.First(&queryUser, "uuid = ?", userFriendRequest.Uuid)
-	logger.Logger.Debug("service", logger.Any("queryUser", queryUser))
-
-	var ID_NIL int32 = 0
-	if ID_NIL == queryUser.ID {
-		return misprint.New("user doesn't exist")
-	}
-
-	var friend *model.User
-	Db.First(&friend, "username = ?", userFriendRequest.FriendUsername)
-	if ID_NIL == friend.ID {
-		return misprint.New("friend has been added")
-	}
-
-	userFriend := model.UserFriend {
-		UserId: 	queryUser.ID,
-		FriendId: 	friend.ID,
-	}
-
-	var userFriendQuery *model.UserFriend
-	Db.First(&userFriendQuery, "user_id = ? and friend_id = ?", queryUser.ID, friend.ID)
-	if userFriendQuery.ID != NULL_ID {
-		return misprint.New("user is already a friend")
-	}
-
-	// db.AutoMigrate(&userFriend)
-	Db.Save(&userFriend)
-	logger.Logger.Debug("service", logger.Any("userFriend", userFriend))
-
-	return nil
-}
-
-// ========================================================================
-func (u *UserService) DeleteFriend(id string) error {
-	var userFriend *model.UserFriend
-
-	Db.First(&userFriend, "id = ?", id)
-	if NULL_ID == userFriend.ID {
-		return misprint.New("user doesn't exist")
-	}
-
-	Db.Delete(&userFriend)
-
-	return nil
 }
 
 // modify avatar
@@ -176,12 +166,11 @@ func (u *UserService) ModifyUserAvatar(avatar string, userUuid string) error {
 	var queryUser *model.User
 
 	Db.First(&queryUser, "uuid = ?", userUuid)
-
-	if NULL_ID == queryUser.ID {
+	if queryUser.ID == constant.NULL_ID {
 		return misprint.New("user doesn't exist")
 	}
 
 	Db.Model(&queryUser).Update("avatar", avatar)
-	
+
 	return nil
 }

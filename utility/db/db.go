@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gin-chat-svc/app/model"
 	"gin-chat-svc/config"
+	"time"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -21,7 +22,10 @@ func GetDB() *gorm.DB {
 	dsn := fmt.Sprint(conf.ElephantSQL)
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config {
-		Logger: logger.Default.LogMode(logger.Info),
+		Logger:		logger.Default.LogMode(logger.Info),
+		NowFunc:	func() time.Time {
+			return time.Now().Local()
+		},
 	})
 	if err != nil {
 		panic("error to connect db " + err.Error())
@@ -33,7 +37,10 @@ func GetDB() *gorm.DB {
 		model.GroupMember {},
 		model.Group {},
 		model.Message {},
-		model.UserFriend {},
+		model.MessageVisibility {},
+		model.AllUserInteract {},	// tmp from user_interacts
+		model.UserInteract {},
+		model.UserInteractVisibility {},
 		model.User {},
 	)
 

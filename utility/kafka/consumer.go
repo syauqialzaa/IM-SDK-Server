@@ -29,7 +29,7 @@ func InitConsumer(hosts string) {
 func ConsumerMsg(callBack ConsumerCallback) {
 	partitionConsumer, err := consumer.ConsumePartition(topic, 0, sarama.OffsetNewest)
 	if nil != err {
-		logger.Logger.Error("iConsumePartition error", logger.Any("ConsumePartition error", err.Error()))
+		logger.Logger.Error("ConsumePartition error", logger.Any("ConsumePartition error", err.Error()))
 		return
 	}
 

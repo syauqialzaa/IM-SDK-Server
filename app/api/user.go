@@ -37,18 +37,48 @@ func Login(ctx *gin.Context) {
 	ctx.JSON(http.StatusBadRequest, response.FailMsg("login failed"))
 }
 
-func ModifyUserInfo(ctx *gin.Context) {
-	var user model.User
+func DeleteUser(ctx *gin.Context) {
+	uuid := ctx.Param("uuid")
+	
+	del := service.NewUserService.DeleteUser(uuid)
+	ctx.JSON(http.StatusOK, response.SuccessMsg(del))
+}
 
-	ctx.ShouldBindJSON(&user)
-	logger.Logger.Debug("api", logger.Any("user", user))
+// func ModifyUserInfo(ctx *gin.Context) {
+// 	var user model.User
 
-	if err := service.NewUserService.ModifyUserInfo(&user); err != nil {
-		ctx.JSON(http.StatusBadRequest, response.FailMsg(err.Error()))
+// 	ctx.ShouldBindJSON(&user)
+// 	logger.Logger.Debug("api", logger.Any("user", user))
+
+// 	if err := service.NewUserService.ModifyUserInfo(&user); err != nil {
+// 		ctx.JSON(http.StatusBadRequest, response.FailMsg(err.Error()))
+// 		return
+// 	}
+
+// 	ctx.JSON(http.StatusOK, response.SuccessMsg(nil))
+// }
+
+func ModifyUser(ctx *gin.Context) {
+	var user *model.User
+	var db = service.Db
+	var uuid = ctx.Param("uuid")
+
+	var NULL_ID int32 = 0
+	db.First(&user, "uuid = ?", uuid)
+	if NULL_ID == user.ID {
+		ctx.JSON(http.StatusBadRequest, response.FailMsg("failed to get ID user."))
 		return
 	}
 
-	ctx.JSON(http.StatusOK, response.SuccessMsg(nil))
+	err := ctx.ShouldBindJSON(&user)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, response.FailMsg(err.Error()))
+		return
+	}
+	logger.Logger.Debug("api", logger.Any("user", user))
+
+	service.NewUserService.ModifyUser(db, user)
+	ctx.JSON(http.StatusOK, response.SuccessMsg(user))
 }
 
 func GetUserDetails(ctx *gin.Context) {
@@ -58,14 +88,6 @@ func GetUserDetails(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, response.SuccessMsg(details))
 }
 
-// get user information by username
-func GetUserOrGroupByName(ctx *gin.Context) {
-	name := ctx.Query("name")
-	getInfo := service.NewUserService.GetUserOrGroupByName(name)
-
-	ctx.JSON(http.StatusOK, response.SuccessMsg(getInfo))
-}
-
 func GetUserList(ctx *gin.Context) {
 	uuid := ctx.Query("uuid")
 	getList := service.NewUserService.GetUserList(uuid)
@@ -73,11 +95,11 @@ func GetUserList(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, response.SuccessMsg(getList))
 }
 
-func AddFriend(ctx *gin.Context) {
-	var userFriendRequest request.FriendRequest
+func AddUserInteract(ctx *gin.Context) {
+	var userInteractRequest request.InteractRequest
 
-	ctx.ShouldBindJSON(&userFriendRequest)
-	err := service.NewUserService.AddFriend(&userFriendRequest)
+	ctx.ShouldBindJSON(&userInteractRequest)
+	err := service.NewUserService.AddUserInteract(&userInteractRequest)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, response.FailMsg(err.Error()))
 		return
@@ -86,10 +108,20 @@ func AddFriend(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, response.SuccessMsg(nil))
 }
 
-func DeleteFriend(ctx *gin.Context) {
-	id := ctx.Param("id")
-	service.NewUserService.DeleteFriend(id)
-	var updatedData model.UserFriend
+func DeleteUserInteract(ctx *gin.Context) {
+	var userInteractRequest request.InteractRequest
 
-	ctx.JSON(http.StatusOK, response.SuccessMsg(updatedData))
+	err := ctx.BindQuery(&userInteractRequest)
+	if err != nil {
+		logger.Logger.Error("api", logger.Any("bindQueryError", err))
+	}
+	logger.Logger.Info("api", logger.Any("userInteractRequest params: ", userInteractRequest))
+
+	err = service.NewUserService.DeleteUserInteract(&userInteractRequest)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, response.FailMsg(err.Error()))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, response.SuccessMsg(userInteractRequest))
 }

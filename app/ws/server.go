@@ -5,6 +5,7 @@ import (
 	"gin-chat-svc/app/service"
 	"gin-chat-svc/config"
 	"gin-chat-svc/pkg/common/constant"
+	"gin-chat-svc/pkg/common/request"
 	"gin-chat-svc/pkg/common/suffix"
 	"gin-chat-svc/pkg/logger"
 	"gin-chat-svc/pkg/protocol"
@@ -24,6 +25,7 @@ type Server struct {
 	Broadcast	chan []byte
 	Register	chan *Client
 	Unregister	chan *Client
+	Pagination	chan protocol.Message
 }
 
 func NewServer() *Server {
@@ -33,6 +35,7 @@ func NewServer() *Server {
 		Broadcast: 	make(chan []byte),
 		Register: 	make(chan *Client),
 		Unregister: make(chan *Client),
+		Pagination: make(chan protocol.Message, 50),
 	}
 }
 
@@ -48,9 +51,15 @@ func (s *Server) StartServer() {
 	for {
 		select {
 			case conn := <- s.Register:
-				logger.Logger.Info("websocket", logger.Any("login", "new user has arrived" + conn.Name))
+				logger.Logger.Info("websocket", logger.Any("login", "new user has arrived: " + conn.Name))
 				s.Clients[conn.Name] = conn
 				
+				// start online
+				service.NewUserService.StartOnline(conn.Name)
+
+				// autoload list of users and groups
+				// service.NewUserAndGroupService.GetInteracts(conn.Name)
+
 				msg := &protocol.Message {
 					From: 		"system",
 					To: 		conn.Name,
@@ -68,7 +77,28 @@ func (s *Server) StartServer() {
 					delete(s.Clients, conn.Name)
 				}
 
+				// last online
+				service.NewUserService.LastOnline(conn.Name)
+
 			case message := <- s.Broadcast:
+
+				// broadcast all messages in pagination in one block
+				messages := make([]protocol.Message, 0)
+				infLoop:
+					for {
+						select {
+						case message := <- s.Pagination:
+							messages = append(messages, message)
+						default:
+							break infLoop
+						}
+					}
+					// if len(messages) > 0 {
+					// 	for _, client := range s.Clients {
+					// 		client.Send <- message
+					// 	}
+					// }
+
 				msg := &protocol.Message {}
 				proto.Unmarshal(message, msg)
 
@@ -85,6 +115,17 @@ func (s *Server) StartServer() {
 						}
 
 						if msg.MessageType == constant.MESSAGE_TYPE_USER {
+							// get user information (details) when chatting
+							service.NewUserService.GetUserDetails(msg.To)
+
+							// get related messages
+							msgReq := request.MessageRequest {
+								MessageType: 	msg.MessageType,
+								Uuid: 			msg.From,
+								InteractWith: 	msg.To,
+							}
+							service.NewMessageService.GetMessages(msgReq)
+
 							client, ok := s.Clients[msg.To]
 							if ok {
 								msgByte, err := proto.Marshal(msg)
@@ -103,7 +144,7 @@ func (s *Server) StartServer() {
 							client.Send <- message
 						}
 					}
-				} else {
+				} else if len(messages) > 0 {
 					// there is no corresponding receiver to broadcast
 					for id, conn := range s.Clients {
 						logger.Logger.Info("websocket", logger.Any("allUser", id))
@@ -122,6 +163,9 @@ func (s *Server) StartServer() {
 
 // to send a message to a group, you need to query all members of the group to send it in sequence
 func SendGroupMessage(msg *protocol.Message, s *Server) {
+	// get group information when in group chat
+	// service.NewGroupService.GetGroupInfo(msg.To)
+
 	// send a message to a group, find all users in the group and send it
 	users := service.NewGroupService.GetUserIdByGroupUuid(msg.To)
 	for _, user := range users {
@@ -157,10 +201,23 @@ func SendGroupMessage(msg *protocol.Message, s *Server) {
 	}
 }
 
+// get all related messages with autoload
+// func GetMessages(message *protocol.Message) {
+// 	msg := request.MessageRequest {
+// 		MessageType:	message.MessageType,
+// 		Uuid: 			message.From,
+// 		InteractWith: 	message.To,
+// 	}
+	
+// 	if message.FromUsername != "" {
+// 		service.NewMessageService.GetMessages(msg)
+// 	}
+// }
+
 // save the message, if it is a text message, save it directly, if it is a file, 
 // voice and other messages, after saving the file, save the corresponding file path
 func SaveMessage(message *protocol.Message) {
-	// ff you upload a base64 string file, parse the file and save it
+	// if you upload a base64 string file, parse the file and save it
 	if message.ContentType == 2 {
 		url := uuid.New().String() + ".png"
 		index := strings.Index(message.Content, "base64")
@@ -211,5 +268,8 @@ func SaveMessage(message *protocol.Message) {
 		message.ContentType	= contentType
 	}
 
-	service.NewMessageService.SaveMessage(*message)
+	MyServer.Pagination <- *message
+	if message.FromUsername != "" {
+		service.NewMessageService.SaveMessage(*message)
+	}
 }	

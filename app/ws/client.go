@@ -25,6 +25,7 @@ func (c *Client) ReadPump() {
 
 	for {
 		c.Conn.PingHandler()
+		// the server read messages using c.Conn.ReadMessage() (receive message)
 		_, message, err := c.Conn.ReadMessage()
 		if err != nil {
 			logger.Logger.Error("websocket", logger.Any("client read message error", err.Error()))
@@ -32,10 +33,10 @@ func (c *Client) ReadPump() {
 			c.Conn.Close()
 			break
 		}
-
+		
 		msg := &protocol.Message {}
 		proto.Unmarshal(message, msg)
-
+		
 		// pong
 		if msg.Type == constant.HEART_BEAT {
 			pong := &protocol.Message {
@@ -66,6 +67,7 @@ func (c *Client) WritePump() {
 	}()
 
 	for message := range c.Send {
+		// writes the message from server to client (send message)
 		c.Conn.WriteMessage(websocket.BinaryMessage, message)
 	}
 }

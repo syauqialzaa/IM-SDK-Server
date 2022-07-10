@@ -31,7 +31,6 @@ func RunApp() {
 
 	handlers := Router()
 	go ws.MyServer.StartServer()
-
 	serve := &http.Server {
 		Addr: 			":8000",
 		Handler: 		handlers,
