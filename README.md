@@ -104,19 +104,20 @@ message Message {
 - Clone this repository
 - Change directory to IM-SDK-Server directory
 - Dependencies required
+
     ```bash
     go mod download
     ```
 - Adjust to your needs in `config/config.go`
     ```go
     type Config struct {
-        AppName         string		`mapstructure:"APP_NAME"`
-        LogPath         string		`mapstructure:"LOG_PATH"`
-        LogLevel        string		`mapstructure:"LOG_LEVEL"`
-        StaticFile		string		`mapstructure:"STATIC_FILE"`
-        ChannelType		string		`mapstructure:"CHANNEL_TYPE"`
-        KafkaHost		string		`mapstructure:"KAFKA_HOST"`
-        KafkaTopic		string		`mapstructure:"KAFKA_TOPIC"`
+        AppName        string		`mapstructure:"APP_NAME"`
+        LogPath        string		`mapstructure:"LOG_PATH"`
+        LogLevel       string		`mapstructure:"LOG_LEVEL"`
+        StaticFile     string		`mapstructure:"STATIC_FILE"`
+        ChannelType    string		`mapstructure:"CHANNEL_TYPE"`
+        KafkaHost      string		`mapstructure:"KAFKA_HOST"`
+        KafkaTopic     string		`mapstructure:"KAFKA_TOPIC"`
     }
     ```
 - Then create `.env` file
