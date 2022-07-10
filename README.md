@@ -110,9 +110,9 @@ message Message {
 - Adjust to your needs in `config/config.go`
     ```go
     type Config struct {
-        AppName			string		`mapstructure:"APP_NAME"`
-        LogPath			string		`mapstructure:"LOG_PATH"`
-        LogLevel		string		`mapstructure:"LOG_LEVEL"`
+        AppName         string		`mapstructure:"APP_NAME"`
+        LogPath         string		`mapstructure:"LOG_PATH"`
+        LogLevel        string		`mapstructure:"LOG_LEVEL"`
         StaticFile		string		`mapstructure:"STATIC_FILE"`
         ChannelType		string		`mapstructure:"CHANNEL_TYPE"`
         KafkaHost		string		`mapstructure:"KAFKA_HOST"`
