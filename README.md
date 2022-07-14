@@ -6,7 +6,7 @@ The backend of Instant Messaging Software Development Kit (IM-SDK-Server). Using
 - [Features](#features)
 - [Tech Stack](#tech-stack)
 - [Message Protocol](#message-protocol)
-- [Consume API]()
+- [Consume API](#consume-api)
 - [Run](#run)
 - [Get Test With Frontend](#test-with-frontend)
 - [Code Structure](#code-structure)
