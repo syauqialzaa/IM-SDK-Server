@@ -28,6 +28,7 @@ The following are the features in this project.
 - Picture messages
 - Voice messages
 - Video messages
+- Forward message
 - Clipboard picture
 - Sending file
 - Screens sharing
