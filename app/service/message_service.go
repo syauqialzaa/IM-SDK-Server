@@ -4,7 +4,6 @@ import (
 	"gin-chat-svc/app/model"
 	"gin-chat-svc/pkg/common/constant"
 	"gin-chat-svc/pkg/common/request"
-	"gin-chat-svc/pkg/common/response"
 	"gin-chat-svc/pkg/logger"
 	"gin-chat-svc/pkg/misprint"
 	"gin-chat-svc/pkg/protocol"
@@ -64,8 +63,8 @@ func (m *MessageService) SaveMessage(message protocol.Message) model.Message {
 }
 
 // get message based on ID and from_uuid IN and target_uuid IN (the chat room)
-func (m *MessageService) GetMessageById(msgReq request.MsgRequestById) (response.MessageResponse, error) {
-	var msgResp response.MessageResponse
+func (m *MessageService) GetMessageById(msgReq request.MsgRequestById) (*model.Message, error) {
+	var msgResp *model.Message
 	
 	if msgReq.MessageType == constant.MESSAGE_TYPE_USER {
 		var queryUser *model.User
@@ -94,7 +93,8 @@ func (m *MessageService) GetMessageById(msgReq request.MsgRequestById) (response
 			m.id, 
 			m.from_uuid,
 			m.target_uuid, 
-			m.content, 
+			m.content,
+			m.message_type,
 			m.content_type, 
 			m.url, 
 			m.created_at, 
@@ -141,7 +141,8 @@ func (m *MessageService) GetMessageById(msgReq request.MsgRequestById) (response
 			m.id, 
 			m.from_uuid,
 			m.target_uuid, 
-			m.content, 
+			m.content,
+			m.message_type,
 			m.content_type, 
 			m.url, 
 			m.created_at, 

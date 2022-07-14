@@ -13,15 +13,17 @@ import (
 )
 
 func ForwardMessage(ctx *gin.Context) {
-	var forwardReq request.ForwardMsgReq
+	var forwardReq request.MsgRequestById
+	var targets request.Targets
 
+	ctx.ShouldBindJSON(&targets)
 	err := ctx.BindQuery(&forwardReq)
 	if err != nil {
 		logger.Logger.Error("api", logger.Any("bindQueryError", err))
 		return
 	}
 
-	resMsg, err := service.NewMessageService.ForwardMessage(forwardReq)
+	resMsg, err := service.NewMessageService.ForwardMessage(forwardReq, targets)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, response.FailMsg(err.Error()))
 		return

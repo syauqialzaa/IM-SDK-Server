@@ -18,5 +18,9 @@ type ForwardMsgReq struct {
 	Uuid			string		`json:"uuid"`
 	MessageType		int32		`json:"messageType"`
 	InteractWith	string		`json:"interactWith"`
-	ForwardTo		string	`json:"forwardTo"`
+	ForwardTo		string		`json:"forwardTo"`
+}
+
+type Targets struct {
+	Targets		[]string		`json:"targets"`
 }
