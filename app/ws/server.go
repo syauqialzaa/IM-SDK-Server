@@ -5,7 +5,6 @@ import (
 	"gin-chat-svc/app/service"
 	"gin-chat-svc/config"
 	"gin-chat-svc/pkg/common/constant"
-	"gin-chat-svc/pkg/common/request"
 	"gin-chat-svc/pkg/common/suffix"
 	"gin-chat-svc/pkg/logger"
 	"gin-chat-svc/pkg/protocol"
@@ -101,8 +100,11 @@ func (s *Server) StartServer() {
 
 				msg := &protocol.Message {}
 				proto.Unmarshal(message, msg)
-
+				
+				// notification is exist when msg.To == user.Uuid (in this case implement in client-side)
 				if msg.To != "" {
+					logger.Logger.Info("websocket", logger.Any("message received by ", msg.To))
+
 					// general messages, such as text messages, video file messages, etc.
 					if msg.ContentType >= constant.TEXT && msg.ContentType <= constant.VIDEO {
 						// saving messages will only be saved on one end of the socket, 
@@ -116,15 +118,15 @@ func (s *Server) StartServer() {
 
 						if msg.MessageType == constant.MESSAGE_TYPE_USER {
 							// get user information (details) when chatting
-							service.NewUserService.GetUserDetails(msg.To)
+							// service.NewUserService.GetUserDetails(msg.To)
 
 							// get related messages
-							msgReq := request.MessageRequest {
-								MessageType: 	msg.MessageType,
-								Uuid: 			msg.From,
-								InteractWith: 	msg.To,
-							}
-							service.NewMessageService.GetMessages(msgReq)
+							// msgReq := request.MessageRequest {
+							// 	MessageType: 	msg.MessageType,
+							// 	Uuid: 			msg.From,
+							// 	InteractWith: 	msg.To,
+							// }
+							// service.NewMessageService.GetMessages(msgReq)
 
 							client, ok := s.Clients[msg.To]
 							if ok {

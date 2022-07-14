@@ -51,8 +51,6 @@ func (m *MessageService) SaveMessage(message protocol.Message) model.Message {
 
 	saveMessage := model.Message {
 		CreatedAt: 		time.Now().Local(),
-		// UpdatedAt:	 	timeZero,
-		// DeletedAt: 		timeZero,
 		FromUuid: 		fromUser.Uuid,
 		TargetUuid: 	targetUuid,
 		Content: 		message.Content,
@@ -109,7 +107,7 @@ func (m *MessageService) GetMessageById(msgReq request.MsgRequestById) (response
 			to_username 
 		FROM messages AS m LEFT JOIN users AS u ON m.from_uuid = u.uuid 
 		LEFT JOIN users AS to_user ON m.target_uuid = to_user.uuid 
-		WHERE deleted_at IS NULL AND m.id = ? AND from_uuid IN (?, ?)
+		WHERE m.deleted_at IS NULL AND m.id = ? AND from_uuid IN (?, ?)
 		AND target_uuid IN (?, ?)
 		`, msg.ID, queryUser.Uuid, interactWith.Uuid, queryUser.Uuid, interactWith.Uuid,
 		).Scan(&msgResp)
@@ -156,7 +154,7 @@ func (m *MessageService) GetMessageById(msgReq request.MsgRequestById) (response
 			to_group_name
 		FROM messages AS m LEFT JOIN users AS u ON m.from_uuid = u.uuid 
 		LEFT JOIN groups AS to_group ON m.target_uuid = to_group.uuid 
-		WHERE deleted_at IS NULL AND m.id = ? AND from_uuid IN (?, ?) 
+		WHERE m.deleted_at IS NULL AND m.id = ? AND from_uuid IN (?, ?) 
 		AND target_uuid IN (?, ?)
 		`, msg.ID, queryUser.Uuid, interactGroup.Uuid, queryUser.Uuid, interactGroup.Uuid,
 		).Scan(&msgResp)

@@ -15,7 +15,7 @@ import (
 )
 
 func (hu *HttpUserService) GetUserData(userData []response.ResponseUserData) ([]response.ResponseUserData, error) {
-	logger.Logger.Debug("request-service", logger.Any("fetching api", userData))
+	logger.Logger.Debug("service", logger.Any("fetching api", userData))
 
 	client := &http.Client {
 		Timeout: time.Duration(60 * time.Second),
@@ -45,7 +45,7 @@ func (hu *HttpUserService) GetUserData(userData []response.ResponseUserData) ([]
 }
 
 func (hu *HttpUserService) StoreUserData(userData []response.ResponseUserData) ([]response.ResponseUserData, error) {
-	logger.Logger.Debug("request-service", logger.Any("fetching api", userData))
+	logger.Logger.Debug("service", logger.Any("fetching api", userData))
 	
 	// var db = service.Db
 	var userCount int64
@@ -56,7 +56,7 @@ func (hu *HttpUserService) StoreUserData(userData []response.ResponseUserData) (
 	}
 
 	for _, data := range getData {
-		logger.Logger.Debug("request-service", logger.Any("storing data", data))
+		logger.Logger.Debug("service", logger.Any("storing data", data))
 
 		modelUser := model.User {
 			Uuid: 		(constant.USER_TAG_UUID + uuid.New().String()),

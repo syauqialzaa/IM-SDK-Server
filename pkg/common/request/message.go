@@ -12,3 +12,11 @@ type MsgRequestById struct {
 	MessageType		int32		`json:"messageType"`
 	InteractWith	string		`json:"interactWith"`
 }
+
+type ForwardMsgReq struct {
+	ID				int32		`json:"id"`
+	Uuid			string		`json:"uuid"`
+	MessageType		int32		`json:"messageType"`
+	InteractWith	string		`json:"interactWith"`
+	ForwardTo		string	`json:"forwardTo"`
+}

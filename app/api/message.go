@@ -12,6 +12,24 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func ForwardMessage(ctx *gin.Context) {
+	var forwardReq request.ForwardMsgReq
+
+	err := ctx.BindQuery(&forwardReq)
+	if err != nil {
+		logger.Logger.Error("api", logger.Any("bindQueryError", err))
+		return
+	}
+
+	resMsg, err := service.NewMessageService.ForwardMessage(forwardReq)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, response.FailMsg(err.Error()))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, response.SuccessMsg(resMsg))
+}
+
 // get message list
 func GetMessage(ctx *gin.Context) {
 	logger.Logger.Info(ctx.Query("uuid"))

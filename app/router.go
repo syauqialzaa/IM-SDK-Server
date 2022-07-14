@@ -40,6 +40,7 @@ func Router() *gin.Engine {
 		router.PUT("/message/id", api.ModifyMessage)
 		router.DELETE("/message/id/delete-all", api.DeleteMsgForAll)
 		router.DELETE("/message/id/delete-self", api.DeleteMsgForSelf)
+		router.POST("/forward", api.ForwardMessage)
 
 		router.GET("/file/:fileName", api.GetFile)
 		router.POST("/file", api.SaveFile)
