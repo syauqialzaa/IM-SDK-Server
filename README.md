@@ -6,6 +6,7 @@ The backend of Instant Messaging Software Development Kit (IM-SDK-Server). Using
 - [Features](#features)
 - [Tech Stack](#tech-stack)
 - [Message Protocol](#message-protocol)
+- [Consume API]()
 - [Run](#run)
 - [Get Test With Frontend](#test-with-frontend)
 - [Code Structure](#code-structure)
@@ -99,6 +100,30 @@ message Message {
 
 - The protobuf frontend follows the protobuf backend 
 - Technically the implementation depends on the frontend platform used
+
+## Consume API
+IM-SDK-Server can get user data from another REST API server. This feature is made so that users who already have data on other servers do not need to register. The data is not always in the form of user data, you can customize it according to your needs. For configure that thing, customize `pkg/common/response/http_req_res.go`
+```go
+// the response user data following json data from REST API target
+type ResponseUserData struct {
+	Username 	string     	`json:"username"`
+	Password 	string     	`json:"password"`
+	Nickname 	string     	`json:"nickname"`
+	Avatar   	string     	`json:"avatar"`
+	Email    	string     	`json:"email"`
+}
+```
+
+Also configure paths url of REST API target in constant file `pkg/common/constant/constant.go`
+```go
+const (
+    ...
+    // paths
+	BASE_URL		= "http://localhost:8080"
+	GET_ALL			= "/students"
+    ...
+)
+```
 
 ## Run
 - Clone this repository

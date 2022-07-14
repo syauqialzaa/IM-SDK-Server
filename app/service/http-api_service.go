@@ -44,6 +44,7 @@ func (hu *HttpUserService) GetUserData(userData []response.ResponseUserData) ([]
 	return userData, nil
 }
 
+// store the data into database server after fetching the JSON
 func (hu *HttpUserService) StoreUserData(userData []response.ResponseUserData) ([]response.ResponseUserData, error) {
 	logger.Logger.Debug("service", logger.Any("fetching api", userData))
 	
